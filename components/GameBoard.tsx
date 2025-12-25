@@ -2,7 +2,7 @@
 import { gameCell } from "@/types/types";
 import { useEffect, useState } from "react";
 import { PET_EMOJIS } from "@/data/data";
-import { generateBoard } from "@/data/utils";
+import { generateBoard, checkMatch } from "@/data/utils";
 
 export default function GameBoard() {
   // maximum number of different images
@@ -33,12 +33,26 @@ export default function GameBoard() {
           setFirstSelected(undefined);
           return;
         }
+
         if (gameBoard[firstSelected].value === gameBoard[id].value) {
-          gameBoard[firstSelected].value = -1;
-          gameBoard[id].value = -1;
-          setFirstSelected(undefined);
-          setSecondSelected(undefined);
-          return;
+          if (
+            checkMatch(
+              gameBoard[firstSelected],
+              gameBoard[id],
+              rows,
+              cols,
+              gameBoard
+            )
+          ) {
+            gameBoard[firstSelected].value = -1;
+            gameBoard[id].value = -1;
+            setFirstSelected(undefined);
+            setSecondSelected(undefined);
+            return;
+          } else {
+            setFirstSelected(undefined);
+            setSecondSelected(undefined);
+          }
         } else {
           setFirstSelected(undefined);
           setSecondSelected(undefined);
@@ -50,9 +64,7 @@ export default function GameBoard() {
   }
   return (
     <div
-      className={`grid grid-cols-${cols + 2} grid-rows-${
-        rows + 2
-      } gap-2 border-2 h-[95vh] text-center bg-black`}
+      className={`grid grid-cols-16 grid-rows-12 gap-2 border-2 h-[95vh] text-center bg-black`}
     >
       {gameBoard.map((i) => (
         <p
