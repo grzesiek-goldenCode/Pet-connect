@@ -1,4 +1,5 @@
 import { gameCell } from "@/types/types";
+import { useGameStore } from "@/store/gameStore";
 
 // check for edges to generate empty cells around game board - images can be paired on edge of board
 function isEdgeCell(

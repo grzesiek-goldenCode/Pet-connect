@@ -1,5 +1,6 @@
 "use client";
 import GameBoard from "@/components/GameBoard";
+import GameMenu from "@/components/GameMenu";
 
 export default function Home() {
   return (

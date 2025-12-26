@@ -3,6 +3,9 @@ import { gameCell } from "@/types/types";
 import { useEffect, useState } from "react";
 import { PET_EMOJIS } from "@/data/data";
 import { generateBoard, checkMatch } from "@/data/utils";
+import { useGameStore } from "@/store/gameStore";
+import GameMenu from "./GameMenu";
+import GameOver from "./GameOver";
 
 export default function GameBoard() {
   // maximum number of different images
@@ -12,14 +15,20 @@ export default function GameBoard() {
   const rows = 10;
   const cols = 14;
 
-  const [gameBoard, setGameBoard] = useState<gameCell[]>([]);
   const [firstSelected, setFirstSelected] = useState<number | undefined>();
   const [secondSelected, setSecondSelected] = useState<number | undefined>();
+
+  // Zustand context
+  const initializeBoard = useGameStore((state) => state.initializeBoard);
+  const gameBoard = useGameStore((state) => state.gameBoard);
+  const addTime = useGameStore((state) => state.addTime);
+  const addScore = useGameStore((state) => state.addScore);
+  const timeLeft = useGameStore((state) => state.timeLeft);
+
   // create game board
   useEffect(() => {
-    // add 2 to rows and col for empty space around game board
-    setGameBoard(generateBoard(rows + 2, cols + 2));
-  }, []);
+    initializeBoard(12, 16);
+  }, [initializeBoard]);
 
   //   handle click and check if numbers are qual
   function handleClick(id: number) {
@@ -46,12 +55,15 @@ export default function GameBoard() {
           ) {
             gameBoard[firstSelected].value = -1;
             gameBoard[id].value = -1;
+            addTime(10);
+            addScore(10);
             setFirstSelected(undefined);
             setSecondSelected(undefined);
             return;
           } else {
             setFirstSelected(undefined);
             setSecondSelected(undefined);
+            return;
           }
         } else {
           setFirstSelected(undefined);
@@ -62,10 +74,17 @@ export default function GameBoard() {
       return;
     }
   }
+
+  if (timeLeft === 0) {
+    return <GameOver />;
+  }
   return (
     <div
-      className={`grid grid-cols-16 grid-rows-12 gap-2 border-2 h-[95vh] text-center bg-black`}
+      className={`relative grid grid-cols-16 grid-rows-12 gap-2 border-2 h-[95vh] text-center bg-black`}
     >
+      <div className="absolute inset-0 z-10 h-min">
+        <GameMenu />
+      </div>
       {gameBoard.map((i) => (
         <p
           key={i.id}
