@@ -24,3 +24,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.button {
+  @apply text-xl bg-amber-400 rounded-lg px-2 py-1 m-2 hover:bg-amber-500 hover:scale-103;
+}
+
+.inactive-button {
+  @apply text-xl bg-gray-400 rounded-lg px-2 py-1 m-2;
+}
+
+@keyframes card-flip {
+  0%,
+  100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+}
+
+.animate-card-flip {
+  animation: card-flip 0.6s ease-in-out;
+}

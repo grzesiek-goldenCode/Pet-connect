@@ -51,16 +51,15 @@ export function checkMatch(
   // sort id to start always from lower id, no matter what was clicked first
   tilesIds.sort((a, b) => a - b);
   // check if tiles are in same column
-  match = checkLine(gameBoard, tile1, tile2, tilesIds);
-  match && console.log("line");
+  match = checkLine(gameBoard, tile1, tile2, tilesIds, cols);
+
   if (!match) {
-    match = checkOneAngle(gameBoard, tilesIds);
-    console.log("one angle: ", match);
+    match = checkOneAngle(gameBoard, tilesIds, cols);
   }
   if (!match) {
-    match = checkTwoAngles(tilesIds, gameBoard);
-    console.log("two angles: ", match);
+    match = checkTwoAngles(tilesIds, gameBoard, cols);
   }
+
   return match;
 }
 
@@ -68,40 +67,37 @@ function checkLine(
   gameBoard: gameCell[],
   tile1: gameCell,
   tile2: gameCell,
-  tilesIds: number[]
+  tilesIds: number[],
+  cols: number
 ) {
   let match: boolean = false;
 
   if (tile1.col === tile2.col) {
     // iterate to check if other tiles in column are empty
-    for (let i = tilesIds[0]; i <= tilesIds[1]; ) {
-      if (gameBoard[i + 16].id === tilesIds[1]) {
-        return (match = true);
-      } else if (gameBoard[i + 16].value === -1) {
-        i = i + 16;
-      } else {
-        break;
+    for (let i = tilesIds[0] + cols; i < tilesIds[1]; i += cols) {
+      if (gameBoard[i].value !== -1) {
+        return false;
       }
     }
+    return true;
     // check if tiles are in same row
   } else if (tile1.row === tile2.row) {
     // iterate to check if tiles can be connected in straight line
-    for (let i = tilesIds[0]; i <= tilesIds[1]; ) {
-      if (gameBoard[i + 1].id === tilesIds[1]) {
-        return (match = true);
-      } else if (gameBoard[i + 1].value === -1) {
-        i++;
-      } else {
-        break;
+    for (let i = tilesIds[0] + 1; i < tilesIds[1]; i++) {
+      if (gameBoard[i].value !== -1) {
+        return false;
       }
     }
+    return true;
   }
   return false;
 }
-function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
+function checkOneAngle(
+  gameBoard: gameCell[],
+  tilesIds: number[],
+  cols: number
+) {
   let match: boolean = false;
-  let rowClean: boolean = false;
-  let colClean: boolean = false;
 
   const pointOne = gameBoard.findIndex(
     ({ col, row }) =>
@@ -111,7 +107,10 @@ function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
     ({ col, row }) =>
       gameBoard[tilesIds[1]].row === row && gameBoard[tilesIds[0]].col === col
   );
+
   if (gameBoard[pointOne].value === -1) {
+    let rowClean: boolean = false;
+    let colClean: boolean = false;
     // sprawdzanie co ma niższe id - punkt zaznaczony czy punkt przeciecia w danym rzedzie
     const rowLower = tilesIds[0] > pointOne ? pointOne : tilesIds[0];
     const rowHiger = tilesIds[0] > pointOne ? tilesIds[0] : pointOne;
@@ -133,8 +132,7 @@ function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
       if (i === colHiger) {
         colClean = true;
         break;
-      } else if (gameBoard[i + 16].value === -1 || i + 16 === colHiger) {
-        console.log(i);
+      } else if (gameBoard[i + cols].value === -1 || i + cols === colHiger) {
         i = i + 16;
       } else {
         colClean = false;
@@ -143,10 +141,11 @@ function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
     }
     if (rowClean && colClean) {
       return (match = true);
-    } else {
-      return (match = false);
     }
-  } else if (gameBoard[pointTwo].value === -1) {
+  }
+  if (gameBoard[pointTwo].value === -1) {
+    let rowClean: boolean = false;
+    let colClean: boolean = false;
     const rowLower = tilesIds[1] > pointTwo ? pointTwo : tilesIds[1];
     const rowHiger = tilesIds[1] > pointTwo ? tilesIds[1] : pointTwo;
 
@@ -168,11 +167,11 @@ function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
       if (i === colHiger) {
         colClean = true;
         break;
-      } else if (gameBoard[i + 16].value === -1 || i + 16 === tilesIds[1]) {
+      } else if (gameBoard[i + cols].value === -1 || i + cols === tilesIds[1]) {
         i = i + 16;
       } else {
         colClean = false;
-        return colClean;
+        break;
       }
     }
 
@@ -186,13 +185,17 @@ function checkOneAngle(gameBoard: gameCell[], tilesIds: number[]) {
   }
 }
 
-function checkTwoAngles(tilesIds: number[], gameBoard: gameCell[]) {
+function checkTwoAngles(
+  tilesIds: number[],
+  gameBoard: gameCell[],
+  cols: number
+) {
   const p1Id = tilesIds[0];
 
-  const col0Id = gameBoard[p1Id].row * 16;
-  const col = p1Id % 16;
+  const col0Id = gameBoard[p1Id].row * cols;
+  const col = p1Id % cols;
   const row0Id = col;
-  const rowMaxId = 11 * 16 + col;
+  const rowMaxId = 11 * cols + col;
 
   for (let i = p1Id - 1; i >= col0Id; i--) {
     const tile = gameBoard[i];
@@ -200,49 +203,94 @@ function checkTwoAngles(tilesIds: number[], gameBoard: gameCell[]) {
       break;
     }
     let checkIds = [i, tilesIds[1]];
-    let match = checkOneAngle(gameBoard, checkIds);
+    let match = checkOneAngle(gameBoard, checkIds, cols);
 
     if (match) {
       return true;
     }
   }
 
-  for (let i = p1Id + 1; i <= col0Id + 16; i++) {
+  for (let i = p1Id + 1; i <= col0Id + (cols - 1); i++) {
     const tile = gameBoard[i];
     if (tile.value !== -1) {
       break;
     }
     let checkIds = [i, tilesIds[1]];
-    let match = checkOneAngle(gameBoard, checkIds);
+
+    let match = checkOneAngle(gameBoard, checkIds, cols);
 
     if (match) {
       return true;
     }
   }
 
-  for (let i = p1Id - 16; i >= row0Id; i -= 16) {
+  for (let i = p1Id - cols; i >= row0Id; i -= cols) {
     const tile = gameBoard[i];
     if (tile.value !== -1) {
       break;
     }
     let checkIds = [i, tilesIds[1]];
-    let match = checkOneAngle(gameBoard, checkIds);
+    let match = checkOneAngle(gameBoard, checkIds, cols);
 
     if (match) {
       return true;
     }
   }
-  for (let i = p1Id + 16; i <= rowMaxId; i += 16) {
+  for (let i = p1Id + cols; i <= rowMaxId; i += cols) {
     const tile = gameBoard[i];
     if (tile.value !== -1) {
       break;
     }
     let checkIds = [i, tilesIds[1]];
-    let match = checkOneAngle(gameBoard, checkIds);
+    let match = checkOneAngle(gameBoard, checkIds, cols);
 
     if (match) {
       return true;
     }
   }
   return false;
+}
+
+// hint search
+export function findHint(
+  gameBoard: gameCell[],
+  rows: number,
+  cols: number,
+  checkMatch: (
+    tile1: gameCell,
+    tile2: gameCell,
+    rows: number,
+    cols: number,
+    gameBoard: gameCell[]
+  ) => boolean
+): [number, number] | null {
+  for (let i = 0; i < gameBoard.length; i++) {
+    const tile1 = gameBoard[i];
+    if (tile1.value === -1) continue; //Skip empty tile
+    for (let j = i + 1; j < gameBoard.length; j++) {
+      const tile2 = gameBoard[j];
+      if (tile2.value === -1) continue;
+      if (tile1.value === tile2.value) {
+        if (checkMatch(tile1, tile2, rows, cols, gameBoard)) {
+          return [tile1.id, tile2.id];
+        }
+      }
+    }
+  }
+  return null;
+}
+
+export function hasAvailAbleMoves(
+  gameBoard: gameCell[],
+  rows: number,
+  cols: number,
+  checkMatch: (
+    tile1: gameCell,
+    tile2: gameCell,
+    rows: number,
+    cols: number,
+    gameBoard: gameCell[]
+  ) => boolean
+): boolean {
+  return findHint(gameBoard, rows, cols, checkMatch) !== null;
 }
