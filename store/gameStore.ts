@@ -124,28 +124,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
   reshuffleBoard: () => {
     const state = get();
     set({ isShuffling: true });
-    const values: number[] = [];
-    state.gameBoard.forEach((tile) => {
-      if (tile.value !== -1) {
-        values.push(tile.value);
-      }
-      for (let i = values.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [values[i], values[j]] = [values[j], values[i]];
-      }
+
+    setTimeout(() => {
+      const values: number[] = [];
+      const currentBoard = get().gameBoard;
+      currentBoard.forEach((tile) => {
+        if (tile.value !== -1) {
+          values.push(tile.value);
+        }
+        for (let i = values.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [values[i], values[j]] = [values[j], values[i]];
+        }
+      });
       let valueIndex = 0;
-      const newBoard = state.gameBoard.map((tile) => {
+      const newBoard = currentBoard.map((tile) => {
         if (tile.value !== -1) {
           return { ...tile, value: values[valueIndex++] };
         }
         return tile;
       });
-      setTimeout(() => {
-        get().checkForAvailAbleMoves();
-      }, 500);
-      setTimeout(() => {
-        set({ gameBoard: newBoard, isShuffling: false });
-      }, 500);
-    });
+
+      set({ gameBoard: newBoard });
+    }, 800);
+    setTimeout(() => {
+      set({ isShuffling: false });
+    }, 1200);
+    setTimeout(() => {
+      get().checkForAvailAbleMoves();
+    }, 1500);
   },
 }));
